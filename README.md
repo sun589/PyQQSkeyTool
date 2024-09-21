@@ -9,6 +9,7 @@ pip install PyQQSkeyTool
 ```
 ****
 ## 使用实例
+### 扫码登录:
 ``` python
 # 扫码登录实例
 import PyQQSkeyTool
@@ -35,7 +36,7 @@ while True:
 print(status_data.get("uin"), status_data.get("login_url")) # 输出QQ号和登录网址
 print(qrlogin.getCookies()) # 输出Cookies 返回:{"code":0,msg:"获取成功!","cookies":{xxxxx}}
 ```
-
+### 获取Clientkey:
 ``` python
 # clientkey获取实例
 # clientkey_url和ptsigx_url均可以登录网站,如果clientkey_url不行就换ptsigx_url的
