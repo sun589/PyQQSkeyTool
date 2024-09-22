@@ -52,3 +52,22 @@ print(ck.getClientkey()) # 返回:{'code': 0, 'uin': xxxx, 'nickname': 'xxx', 'c
 print(ck.getLoginUrl()) # 返回:{"code":0,"msg":"获取成功!",ptsigx_url:{xxx},clientkey_url:{xxx}}
 ```
 ****
+## 如何自定义登录data
+库内已内置`qzone.qq.com`/`qun.qq.com`/`vip.qq.com`三个登录data,如需要其他请往下看:  
+首先你得有一定的爬虫基础,然后在你想要的网站开F12抓包,刷新登录页面,等待出现二维码,然后在开发工具点Img,找到
+`https://ssl.ptlogin2.qq.com/ptqrshow`请求,点负载,然后将对应的参数填在指定格式的字典内:  
+```
+{"s_url":"xxxx","daid":"xxx","appid":"xxxx"}
+```
+s_url:对应参数的u1  
+daid:对应参数的daid  
+appid:对应参数的appid  
+### 示例:  
+![image](https://github.com/user-attachments/assets/47ccfbbb-0c45-45a0-b3ba-ab398101c0c2)
+以上为`vip.qq.com`的参数,那么按照格式就应该在custom_data填入:  
+```
+{"s_url":"https://vip.qq.com/loginsuccess.html","daid":"18","appid":"8000201"}
+```
+在填好后,只需在实例化`QrLogin`类时填入参数custom_data即可生效使用
+``` python
+qrlogin = PyQQSkeyTool.QrLogin(custom_data={"s_url":"https://vip.qq.com/loginsuccess.html","daid":"18","appid":"8000201"})
