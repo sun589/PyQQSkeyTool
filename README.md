@@ -16,7 +16,7 @@ import PyQQSkeyTool
 import base64
 import os
 import time
-qrlogin = PyQQSkeyTool.QrLogin("qzone.qq.com",custom_data=False) # 这里可以填qzone.qq.com/qun.qq.com/vip.qq.com/自定义(需往下看)
+qrlogin = PyQQSkeyTool.QrLogin("qzone.qq.com",custom_data=None) # 这里可以填qzone.qq.com/qun.qq.com/vip.qq.com/自定义(需往下看)
 qr_data = qrlogin.getQrcode(base64_encode=True) # 返回:{"code":0,"img":"xxxxxx","qrsig":"xxxx","ptqrtoken"xxxxx"} 如果base64_encode为False则返回图片数据
 code = qr_data.get("code")
 if code != 0: # 代表获取失败
