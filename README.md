@@ -8,6 +8,12 @@
 pip install PyQQSkeyTool
 ```
 ****
+## 打包方法
+在cmd执行以下命令:  
+```
+python setup.py sdist
+```
+****
 ## 使用实例
 ### 扫码登录:
 ``` python
