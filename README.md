@@ -8,6 +8,9 @@
 pip install PyQQSkeyTool
 ```
 ****
+# 版本要求
+\>= 3.6
+****
 ## 打包方法
 在cmd执行以下命令:  
 ```
