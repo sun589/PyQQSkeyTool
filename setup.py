@@ -1,11 +1,14 @@
 from setuptools import setup, find_packages
 
+with open('README.md', 'r', encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='PyQQSkeyTool',
     version='1.0.0',
     author='sun589',
     author_email='goodluck1787@outlook.com',
-    description='一款集成了QQSkey/QQClientkey获取的库',
+    description=long_description,
     url='https://github.com/sun589/PyQQSkeyTool',
     packages=find_packages(),
     classifiers=[
