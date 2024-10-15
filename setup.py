@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='PyQQSkeyTool',
-    version='1.0.0',
+    version='1.0.1',
     author='sun589',
     author_email='goodluck1787@outlook.com',
     description=long_description,
