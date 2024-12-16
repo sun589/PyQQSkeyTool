@@ -4,6 +4,8 @@
 name: star监听
 
 on:
+  workflow_dispatch:
+
   watch:
     types: [started]
 
