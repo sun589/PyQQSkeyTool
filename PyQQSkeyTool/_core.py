@@ -3,12 +3,14 @@ import random
 import base64
 import time
 from urlextract import URLExtract
-import json
 import re
+from .api import *
 
 __all__ = ['QrLogin','ClientkeyLogin']
 
-class QrLogin():
+class QrLogin:
+
+    __slots__ = ['s_url','qrsig','ptqrtoken','g_tk','login_url','daid','appid']
 
     def __init__(self, url="qzone.qq.com", custom_data=None):
         """
@@ -21,31 +23,14 @@ class QrLogin():
             "qun.qq.com":{"s_url":"https://qun.qq.com","daid":"73","appid":"715030901"},
             "vip.qq.com":{"s_url":"https://vip.qq.com/loginsuccess.html","daid":"18","appid":"8000201"}
         }
-        if custom_data:
-            data = custom_data
-        else:
-            data = app_list.get(url)
+        if custom_data:data = custom_data
+        else: data = app_list.get(url)
         self.s_url = data.get("s_url")
         self.daid = data.get("daid")
         self.appid = data.get("appid")
         self.qrsig = None
         self.ptqrtoken = None
-        self.g_tk = None
         self.login_url = None
-
-    def ptqrToken(self, qrsig) -> int:
-        """
-        计算ptqrtoken,需要qrsig
-        :param qrsig: 获取二维码获得的qrsig
-        :return: ptqrtoken
-        """
-        n, i, e = len(qrsig), 0, 0
-
-        while n > i:
-            e += (e << 5) + ord(qrsig[i])
-            i += 1
-
-        return 2147483647 & e
 
     def getQrcode(self, base64_encode=False) -> dict:
         """
@@ -59,7 +44,7 @@ class QrLogin():
         if base64_encode:
             qrcode_content = base64.b64encode(qrcode_content)
         qrsig = qr_cookies.get("qrsig")
-        ptqrtoken = self.ptqrToken(qrsig)
+        ptqrtoken = ptqrToken(qrsig)
         self.qrsig = qrsig
         self.ptqrtoken = ptqrtoken
         if not (qrsig and ptqrtoken):
@@ -71,6 +56,8 @@ class QrLogin():
         检测二维码扫描状态,并返回QQ号和登录地址
         :return: 状态以及QQ号和登录网址
         """
+        if not (self.qrsig and self.ptqrtoken):
+            return {"code":-1,"msg":"请先获取二维码!"}
         l = requests.get(
             f"https://ssl.ptlogin2.qq.com/ptqrlogin?u1={self.s_url}&ptqrtoken={self.ptqrtoken}&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action={time.time()}&js_ver=23111510&js_type=1&login_sig=&pt_uistyle=40&aid={self.appid}&daid={self.daid}&&o1vId=&pt_js_version=v1.48.1",
             cookies={"qrsig": self.qrsig})
@@ -103,71 +90,80 @@ class QrLogin():
         except:
             return {"code":-1,"msg":"获取失败!"}
 
-class ClientkeyLogin():
+class ClientkeyLogin:
+
+    __slots__ = ['accounts','pt_local_token','pt_login_sig','session']
 
     def __init__(self):
-        self.clientkey = None
-        self.uin = None
+        self.accounts = []
         self.pt_local_token = None
         self.pt_login_sig = None
         self.session = requests.session()
 
-    def getClientkey(self) -> dict:
+    def getClientkey(self, port=4301) -> dict:
         """
-        获取Clientkey
+        获取Clientkey,需提供端口,默认为4301
         :return: QQ号,名称和clientkey
         """
         try:
-            login_htm = self.session.get(
+            self.accounts = []
+            session = requests.session()
+            login_html = session.get(
                 "https://xui.ptlogin2.qq.com/cgi-bin/xlogin?s_url=https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone")
-            q_cookies = requests.utils.dict_from_cookiejar(login_htm.cookies)
+            q_cookies = login_html.cookies.get_dict()
             pt_local_token = q_cookies.get("pt_local_token")
-            pt_login_sig = q_cookies.get("pt_login_sig")
-            
-            params = {"callback": "ptui_getuins_CB",
-                      "r": "0.8987470931280881",
-                      "pt_local_tk": pt_local_token}
-            cookies = q_cookies
-            headers = {"Referer": "https://xui.ptlogin2.qq.com/",
-                       "Host": "localhost.ptlogin2.qq.com:4301",
-                       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"}
-            get_uin = self.session.get("https://localhost.ptlogin2.qq.com:4301/pt_get_uins", params=params, cookies=cookies,
-                                  headers=headers).text
-            uin_list = re.findall(r'\[([^\[\]]*)\]', get_uin)[0]
-            split_list = list(map(lambda i: i if i[0] == '{' else '{' + i, uin_list.split(',{')))
-            uin = None
-            nickname = None
-            if len(split_list) > 1:
-                uin_list = json.loads(json.loads(json.dumps(split_list[0])))  # Json库我爱你loads后返回str还要再loads一次 凸(艹皿艹 )
-                uin = uin_list.get("uin")
-                nickname = uin_list.get("nickname")
-            else:
-                uin = json.loads(uin_list).get('uin')
-                nickname = json.loads(uin_list).get('nickname')
-            clientkey_params = {"clientuin": uin,
-                                "r": "0.14246048393632815",
-                                "pt_local_tk": pt_local_token,
-                                "callback": "__jp0"}
-            clientkey_get = self.session.get("https://localhost.ptlogin2.qq.com:4301/pt_get_st", cookies=cookies,
-                                        headers=headers, params=clientkey_params)
-            clientkey_cookies = requests.utils.dict_from_cookiejar(clientkey_get.cookies)
-            clientkey = clientkey_cookies.get("clientkey")
-            self.uin = uin
-            self.clientkey = clientkey
             self.pt_local_token = pt_local_token
-            self.pt_login_sig = pt_login_sig
-            return {"code":0,"uin":uin,"nickname":nickname,"clientkey":clientkey}
+            params = {
+                "callback": "ptui_getuins_CB",
+                "r": "0.8987470931280881",
+                "pt_local_tk": pt_local_token
+            }
+            headers = {
+                "Referer": "https://xui.ptlogin2.qq.com/",
+                "Host": f"localhost.ptlogin2.qq.com:{port}",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
+            }
+            get_uins_req = session.get(f"https://localhost.ptlogin2.qq.com:{port}/pt_get_uins", params=params,
+                                       cookies=q_cookies,
+                                       headers=headers)
+            uins = re.findall('"uin":(\d+)', get_uins_req.text)
+            nickname = re.findall('"nickname":"(.*?)"', get_uins_req.text)
+            result = []
+            i = 0
+            for uin in uins:
+                params = {
+                    "clientuin": uin,
+                    "r": "0.9059695467741018",
+                    "pt_local_tk": pt_local_token,
+                    "callback": "__jp0"
+                }
+                ck_req = session.get(f"https://localhost.ptlogin2.qq.com:{port}/pt_get_st", params=params,
+                                     cookies=q_cookies, headers=headers)
+                ck_cookies = ck_req.cookies.get_dict()
+                ck_cookies["nickname"] = nickname[i]
+                result.append(ck_cookies)
+                self.accounts.append(ck_cookies)
+                i += 1
+            return {"code":0, "msg":"获取成功!", "data": result}
         except Exception as e:
             return {"code":-1,"msg":repr(e)}
-    def getLoginUrl(self) -> dict:
+
+    def getLoginUrl(self, uin:str="0", index:int=None) -> dict:
         """
-        通过Clientkey获取登录url,包含ptsigx登录方式与QQ客户端登录方式对应的url
+        通过Clientkey获取登录url,包含ptsigx登录方式与QQ客户端登录方式对应的url,默认使用最后一个获取到的账号
+        uin和index参数都是指定账号，但uin提供的是QQ号而index提供的是账号在列表哪个位置(注意有uin就忽略index参数)
+        :param uin: 获取哪个账号的登录网址，有此参数则忽略index参数
+        :param: index: 获取第几个账号的登录网址
         :return: login_url
         """
         try:
+            if index == None:
+                index = self.getUinIndex(uin)
+            uin = self.accounts[index].get("clientuin")
+            clientkey = self.accounts[index].get("clientkey")
             qzone_params = {
                 "u1": "https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone",
-                "clientuin": self.uin,
+                "clientuin": uin,
                 "pt_aid": "549000912",
                 "keyindex": "19",
                 "pt_local_tk": self.pt_local_token,
@@ -177,8 +173,8 @@ class ClientkeyLogin():
                 "daid": "5"
             }
             qzone_jump_cookies = {
-                "clientkey": self.clientkey,
-                "clientuin": str(self.uin),
+                "clientkey": clientkey,
+                "clientuin": str(uin),
                 "pt_local_token": self.pt_local_token
             }
             headers = {"Referer": "https://xui.ptlogin2.qq.com/",
@@ -188,30 +184,28 @@ class ClientkeyLogin():
                                     headers=headers)
             extractor = URLExtract()
             qzone_url_ptsigx = extractor.find_urls(qzone_url.text)[0]
-            qzone_url_cientkey = f"https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin={self.uin}&clientkey={self.clientkey}&u1=https://user.qzone.qq.com/{self.uin}/infocenter&keyindex=19"
+            qzone_url_cientkey = f"https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin={uin}&clientkey={clientkey}&u1=https://user.qzone.qq.com/{uin}/infocenter&keyindex=19"
             mail_params = {
-                "u1": "https://graph.qq.com/oauth2.0/login_jump",
-                "clientuin": self.uin,
-                "pt_aid": "716027609",
+                "u1": "https://wx.mail.qq.com/list/readtemplate?name=login_jump.html",
+                "clientuin": uin,
+                "pt_aid": "522005705",
                 "keyindex": "19",
                 "pt_local_tk": self.pt_local_token,
-                "pt_3rd_aid": "102013353",
+                "pt_3rd_aid": "0",
                 "ptopt": "1",
-                "style": "40",
-                "daid": "383"
+                "style": "40"
             }
             mail_cookies = {
-                "clientkey": str(self.clientkey),
-                "clientuin": str(self.uin),
+                "clientkey": str(clientkey),
+                "clientuin": str(uin),
                 "pt_local_token": str(self.pt_local_token),
-                "pt_login_sig": str(self.pt_login_sig)
             }
             mail_url = self.session.get("https://ssl.ptlogin2.qq.com/jump", params=mail_params, cookies=mail_cookies,
                                    headers=headers)
             mail_url_ptsigx = extractor.find_urls(mail_url.text)[0]
-            mail_url_clientkey = f"https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin={self.uin}&clientkey={self.clientkey}&u1=https://wx.mail.qq.com/list/readtemplate?name=login_page.html&keyindex=19"
+            mail_url_clientkey = f"https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin={uin}&clientkey={clientkey}&u1=https://wx.mail.qq.com/list/readtemplate?name=login_page.html&keyindex=19"
             qun_params = {
-                "clientuin": str(self.uin),
+                "clientuin": str(uin),
                 "keyindex": "19",
                 "pt_aid": "715030901",
                 "daid": "73",
@@ -222,8 +216,8 @@ class ClientkeyLogin():
                 "style": "40"
             }
             qun_cookies = {
-                "clientkey": str(self.clientkey),
-                "clientuin": str(self.uin),
+                "clientkey": str(clientkey),
+                "clientuin": str(uin),
                 "pt_local_token": str(self.pt_local_token),
                 "pt_login_sig": str(self.pt_login_sig)
             }
@@ -233,3 +227,15 @@ class ClientkeyLogin():
             return {"code":0,"msg":"获取成功!","ptsigx_url":{"qzone":qzone_url_ptsigx, "mail":mail_url_ptsigx, "qun":qun_url_ptsigx},"clientkey_url":{"qzone":qzone_url_cientkey,"mail":mail_url_clientkey}}
         except Exception as e:
             return {"code":-1,"msg":repr(e)}
+
+    def getUinIndex(self, uin: str) -> int:
+        """
+        获取QQ号所在的索引
+        :param uin: QQ号
+        :return: 对应的索引,没找到返回-1
+        """
+        for i in range(len(self.accounts)):
+            if self.accounts[i].get("clientuin") == uin:
+                return i
+        else:
+            return -1

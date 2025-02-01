@@ -1,3 +1,5 @@
 from ._core import *
-__version__ = '1.0.1'
-__author__ = "sun589"
+from . import client
+from .constant import AUTHOR,VERSION
+__version__ = VERSION
+__author__ = AUTHOR

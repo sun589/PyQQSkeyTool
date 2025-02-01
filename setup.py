@@ -1,14 +1,14 @@
-# -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
+from PyQQSkeyTool.constant import AUTHOR,VERSION,EMAIL
 
 with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
     name='PyQQSkeyTool',
-    version='1.0.1',
-    author='sun589',
-    author_email='goodluck1787@outlook.com',
+    version=VERSION,
+    author=AUTHOR,
+    author_email=EMAIL,
     description=long_description,
     url='https://github.com/sun589/PyQQSkeyTool',
     packages=find_packages(),

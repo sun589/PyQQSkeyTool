@@ -8,7 +8,7 @@
 pip install PyQQSkeyTool
 ```
 ****
-## 版本要求
+# 版本要求
 \>= 3.6
 ****
 ## 打包方法
@@ -48,16 +48,19 @@ print(qrlogin.getCookies()) # 输出Cookies 返回:{"code":0,msg:"获取成功!"
 ### 获取Clientkey:
 ``` python
 # clientkey获取实例
-# clientkey_url和ptsigx_url均可以登录网站,如果clientkey_url不行就换ptsigx_url的
 import PyQQSkeyTool
 ck = PyQQSkeyTool.ClientkeyLogin()
-print(ck.getClientkey()) # 返回:{'code': 0, 'uin': xxxx, 'nickname': 'xxx', 'clientkey': 'xxxx'}
-print(ck.getLoginUrl()) # 返回:{"code":0,"msg":"获取成功!",ptsigx_url:{xxx},clientkey_url:{xxx}}
+accounts = ck.getClientkey(port=4301)['data'] # 返回:{'code': 0, 'msg': '获取成功!', 'data': [{'clientkey': 'xxx', 'clientuin': 'xxx', 'nickname': 'xxx'},{'clientkey': 'xxx', 'clientuin': 'xxx', 'nickname': 'xxx'}.....]}
+print(ck.getLoginUrl(uin=accounts[0]['uin'])) # 返回:{"code":0,"msg":"获取成功!",ptsigx_url:{xxx},clientkey_url:{xxx}}
+# 你也可以这样写:
+# print(ck.getLoginUrl(index=0))
+# clientkey_url和ptsigx_url均可以登录网站,如果clientkey_url不行就换ptsigx_url的
 ```
+更多例子请见仓库的[example](/example)文件夹
 ****
 ## 如何自定义登录data
 库内已内置`qzone.qq.com`/`qun.qq.com`/`vip.qq.com`三个登录data,如需要其他请往下看:  
-首先你得有一定的爬虫基础,然后在你想要的网站开F12抓包,刷新登录页面,等待出现二维码,然后在开发工具点Img,找到
+首先在你想要获取的网站开F12抓包,刷新登录页面,等待出现二维码,然后在开发工具点Img,找到
 `https://ssl.ptlogin2.qq.com/ptqrshow`请求,点负载,然后将对应的参数填在指定格式的字典内:  
 ```
 {"s_url":"xxxx","daid":"xxx","appid":"xxxx"}
