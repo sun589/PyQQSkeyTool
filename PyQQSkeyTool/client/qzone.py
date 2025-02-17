@@ -57,10 +57,11 @@ class QzoneManager:
     "qzreferrer":"https://user.qzone.qq.com/proxy/domain/qzs.qq.com/qzone/v6/setting/profile/profile.html?tab=base",
     "g_iframeUser":"1"
 }
-        return requests.post(
+        r1 = requests.post(
             f"https://h5.qzone.qq.com/proxy/domain/w.qzone.qq.com/cgi-bin/user/cgi_apply_updateuserinfo_new?&g_tk={self.g_tk}",
-            data=data, headers=self.headers, params=data, cookies=self.cookies).text
-
+            data=data, headers=self.headers, params=data, cookies=self.cookies)
+        r1.encoding = 'utf-8'
+        return r1.text
     def get_friends_list(self) -> list:
         """
         获取好友列表
@@ -76,7 +77,9 @@ class QzoneManager:
 }
         friends = []
         try:
-            res = requests.get("https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/friend_ship_manager.cgi",params=data,cookies=self.cookies,headers=self.headers,json=data,data=data).text[10:-2]
+            res = requests.get("https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/tfriend/friend_ship_manager.cgi",params=data,cookies=self.cookies,headers=self.headers,json=data,data=data)
+            res.encoding = 'utf-8'
+            res = res.text[10:-2]
             friend_list = json.loads(res).get("data").get("items_list")
             print(friend_list)
         except Exception as e:
@@ -114,7 +117,9 @@ class QzoneManager:
     "format":"fs",
     "qzreferrer":f"https://user.qzone.qq.com/{self.uin[1:]}"
 }
-        return requests.post(f"https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/emotion_cgi_publish_v6?&g_tk={self.g_tk}", data=data,headers=self.headers,params=data,cookies=self.cookies).text
+        r1 = requests.post(f"https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/emotion_cgi_publish_v6?&g_tk={self.g_tk}", data=data,headers=self.headers,params=data,cookies=self.cookies).text
+        r1.encoding = 'utf-8'
+        return r1
 
     def get_emotions_list(self, page=0, num:int=1, replace_newline:str='\n') -> list:
         """
@@ -144,7 +149,9 @@ class QzoneManager:
         while True:
             res = requests.get(
                 f"https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6",
-                params=data, headers=self.headers, cookies=self.cookies).json()
+                params=data, headers=self.headers, cookies=self.cookies)
+            res.encoding = 'utf-8'
+            res = res.json()
             if res.get("msglist"):
                 msg_list = res['msglist']
                 for msg in msg_list:

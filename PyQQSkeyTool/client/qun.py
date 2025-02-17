@@ -46,6 +46,7 @@ class QunManager:
             "settings": {"is_show_edit_card": 1, "tip_window_type": 0, "confirm_required": confirm_required}
         }
         r1 = requests.post(f"https://web.qun.qq.com/cgi-bin/announce/add_qun_notice?bkn={self.bkn}", params=data,headers=self.headers, cookies=self.cookies)
+        r1.encoding = "utf-8"
         return r1.json() if to_json else r1.text
 
     def get_notices_list(self, target_qid, replace_newline:str='\n') -> list:
@@ -66,7 +67,9 @@ class QunManager:
         }
         notices = []
         while True:
-            res = requests.post(f"https://web.qun.qq.com/cgi-bin/announce/list_announce?bkn={self.bkn}", params=data,json=data,headers=self.headers, cookies=self.cookies).json()
+            res = requests.post(f"https://web.qun.qq.com/cgi-bin/announce/list_announce?bkn={self.bkn}", params=data,json=data,headers=self.headers, cookies=self.cookies)
+            res.encoding = 'utf-8'
+            res = res.json()
             if "feeds" in res or "inst" in res:
                 data['s'] = str(int(data['s'])-10)
                 data['ni'] = 'undefined'
@@ -112,6 +115,7 @@ class QunManager:
             "fid": fid
         }
         r1 = requests.post(f"https://web.qun.qq.com/cgi-bin/announce/del_feed?bkn={bkn}", data=data,params=data,headers=self.headers, cookies=self.cookies)
+        r1.encoding = 'utf-8'
         return r1.json() if to_json else r1.text
 
     def get_qun_members(self, target_qid) -> list:
@@ -133,6 +137,7 @@ class QunManager:
         end = 9
         while True:
             res = requests.post(f"https://qun.qq.com/cgi-bin/qun_mgr/search_group_members?bkn={self.bkn}&ts=1702901784527",cookies=self.cookies,data=data,headers=self.headers).json()
+            res.encoding = 'utf-8'
             try:
                 for i in res['mems']:
                     _ = {

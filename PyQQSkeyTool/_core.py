@@ -39,6 +39,7 @@ class QrLogin:
         """
         url = f"https://ssl.ptlogin2.qq.com/ptqrshow?appid={self.appid}&t={random.random()}&daid={self.daid}&pt_3rd_aid=0&u1={self.s_url}"
         qr_req = requests.get(url)
+        qr_req.encoding = 'utf-8'
         qr_cookies = qr_req.cookies.get_dict()
         qrcode_content = qr_req.content
         if base64_encode:
@@ -61,6 +62,7 @@ class QrLogin:
         l = requests.get(
             f"https://ssl.ptlogin2.qq.com/ptqrlogin?u1={self.s_url}&ptqrtoken={self.ptqrtoken}&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action={time.time()}&js_ver=23111510&js_type=1&login_sig=&pt_uistyle=40&aid={self.appid}&daid={self.daid}&&o1vId=&pt_js_version=v1.48.1",
             cookies={"qrsig": self.qrsig})
+        l.encoding = 'utf-8'
         if '二维码未失效' in l.text:
             return {"code":0,"msg":"二维码未失效"}
         elif '二维码已失效' in l.text:
@@ -85,6 +87,7 @@ class QrLogin:
         """
         try:
             login_req = requests.get(self.login_url,allow_redirects=False)
+            login_req.encoding = 'utf-8'
             targetCookies = login_req.cookies.get_dict()
             return {"code":0,"msg":"获取成功!","cookies":targetCookies}
         except:
@@ -110,6 +113,7 @@ class ClientkeyLogin:
             session = requests.session()
             login_html = session.get(
                 "https://xui.ptlogin2.qq.com/cgi-bin/xlogin?s_url=https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone")
+            login_html.encoding = 'utf-8'
             q_cookies = login_html.cookies.get_dict()
             pt_local_token = q_cookies.get("pt_local_token")
             self.pt_local_token = pt_local_token
@@ -126,6 +130,7 @@ class ClientkeyLogin:
             get_uins_req = session.get(f"https://localhost.ptlogin2.qq.com:{port}/pt_get_uins", params=params,
                                        cookies=q_cookies,
                                        headers=headers)
+            get_uins_req.encoding = 'utf-8'
             uins = re.findall('"uin":(\d+)', get_uins_req.text)
             nickname = re.findall('"nickname":"(.*?)"', get_uins_req.text)
             result = []
@@ -139,6 +144,7 @@ class ClientkeyLogin:
                 }
                 ck_req = session.get(f"https://localhost.ptlogin2.qq.com:{port}/pt_get_st", params=params,
                                      cookies=q_cookies, headers=headers)
+                ck_req.encoding = 'utf-8'
                 ck_cookies = ck_req.cookies.get_dict()
                 ck_cookies["nickname"] = nickname[i]
                 result.append(ck_cookies)
@@ -182,6 +188,7 @@ class ClientkeyLogin:
                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"}
             qzone_url = self.session.get("https://ssl.ptlogin2.qq.com/jump", params=qzone_params, cookies=qzone_jump_cookies,
                                     headers=headers)
+            qzone_url.encoding = 'utf-8'
             extractor = URLExtract()
             qzone_url_ptsigx = extractor.find_urls(qzone_url.text)[0]
             qzone_url_cientkey = f"https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin={uin}&clientkey={clientkey}&u1=https://user.qzone.qq.com/{uin}/infocenter&keyindex=19"
@@ -202,6 +209,7 @@ class ClientkeyLogin:
             }
             mail_url = self.session.get("https://ssl.ptlogin2.qq.com/jump", params=mail_params, cookies=mail_cookies,
                                    headers=headers)
+            mail_url.encoding = 'utf-8'
             mail_url_ptsigx = extractor.find_urls(mail_url.text)[0]
             mail_url_clientkey = f"https://ssl.ptlogin2.qq.com/jump?ptlang=1033&clientuin={uin}&clientkey={clientkey}&u1=https://wx.mail.qq.com/list/readtemplate?name=login_page.html&keyindex=19"
             qun_params = {
@@ -223,6 +231,7 @@ class ClientkeyLogin:
             }
             qun_res = self.session.get("https://ssl.ptlogin2.qq.com/jump", params=qun_params, cookies=qun_cookies,
                                   headers=headers)
+            qun_res.encoding = 'utf-8'
             qun_url_ptsigx = extractor.find_urls(qun_res.text)[0]
             return {"code":0,"msg":"获取成功!","ptsigx_url":{"qzone":qzone_url_ptsigx, "mail":mail_url_ptsigx, "qun":qun_url_ptsigx},"clientkey_url":{"qzone":qzone_url_cientkey,"mail":mail_url_clientkey}}
         except Exception as e:
