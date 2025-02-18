@@ -15,6 +15,7 @@ with open("QRcode.jpg", 'wb') as f: # 写入至文件
 os.startfile("QRcode.jpg") # 打开二维码
 while True:
     status_data = qrlogin.check_scanning_status()
+    print(status_data)
     if status_data.get("code") in [1, -1, -2]: # 检测登录成功或失效,成立则退出
         break
     print(time.strftime('%H:%M:%S'), status_data.get("msg")) # 输出二维码当前状态
