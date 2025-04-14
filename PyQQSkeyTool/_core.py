@@ -109,14 +109,11 @@ class ClientkeyLogin:
         :return: QQ号,名称和clientkey
         """
         try:
-            self.accounts = []
             session = requests.session()
             login_html = session.get(
                 "https://xui.ptlogin2.qq.com/cgi-bin/xlogin?s_url=https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone")
-            login_html.encoding = 'utf-8'
             q_cookies = login_html.cookies.get_dict()
             pt_local_token = q_cookies.get("pt_local_token")
-            self.pt_local_token = pt_local_token
             params = {
                 "callback": "ptui_getuins_CB",
                 "r": "0.8987470931280881",
@@ -129,8 +126,7 @@ class ClientkeyLogin:
             }
             get_uins_req = session.get(f"https://localhost.ptlogin2.qq.com:{port}/pt_get_uins", params=params,
                                        cookies=q_cookies,
-                                       headers=headers)
-            get_uins_req.encoding = 'utf-8'
+                                       headers=headers, timeout=3)
             uins = re.findall('"uin":(\d+)', get_uins_req.text)
             nickname = re.findall('"nickname":"(.*?)"', get_uins_req.text)
             result = []
@@ -144,12 +140,18 @@ class ClientkeyLogin:
                 }
                 ck_req = session.get(f"https://localhost.ptlogin2.qq.com:{port}/pt_get_st", params=params,
                                      cookies=q_cookies, headers=headers)
-                ck_req.encoding = 'utf-8'
                 ck_cookies = ck_req.cookies.get_dict()
-                ck_cookies["nickname"] = nickname[i]
+                if len(nickname) == len(uins):
+                    ck_cookies["nickname"] = nickname[i]
+                else:
+                    get_nickname_req = requests.get(
+                        f'https://users.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins={uins[i]}')
+                    get_nickname_req.encoding = 'utf-8'
+                    name = re.findall(r'\[.*,.*,.*,.*,.*,.*,"(.*)",.*\]', get_nickname_req.text)[0]
+                    ck_cookies['nickname'] = name
                 result.append(ck_cookies)
-                self.accounts.append(ck_cookies)
                 i += 1
+            self.accounts = result
             return {"code":0, "msg":"获取成功!", "data": result}
         except Exception as e:
             return {"code":-1,"msg":repr(e)}
